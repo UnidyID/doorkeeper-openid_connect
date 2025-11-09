@@ -14,6 +14,117 @@ describe Doorkeeper::OpenidConnect do
       expect(subject.signing_key).to be_a ::JWT::JWK::KeyBase
       expect(subject.signing_key.kid).to eq 'IqYwZo2cE6hsyhs48cU8QHH4GanKIx0S4Dc99kgTIMA'
     end
+
+    context 'when signing_key is callable with RSA key' do
+      let(:rsa_key_1) { OpenSSL::PKey::RSA.generate(2048) }
+      let(:rsa_key_2) { OpenSSL::PKey::RSA.generate(2048) }
+      let(:rsa_key_1_pem) { rsa_key_1.to_pem }
+      let(:rsa_key_2_pem) { rsa_key_2.to_pem }
+
+      before do
+        key_pem = rsa_key_1_pem
+        Doorkeeper::OpenidConnect.configure do
+          signing_key -> { key_pem }
+        end
+      end
+
+      it 'returns a JWK instance' do
+        expect(subject.signing_key).to be_a ::JWT::JWK::KeyBase
+      end
+
+      it 'generates correct key type' do
+        expect(subject.signing_key_normalized[:kty]).to eq 'RSA'
+      end
+
+      it 'generates valid kid' do
+        expect(subject.signing_key.kid).not_to be_nil
+        expect(subject.signing_key.kid).to be_a String
+        expect(subject.signing_key.kid.length).to be > 0
+      end
+
+      it 'generates different kids for different keys' do
+        kid_1 = subject.signing_key.kid
+
+        key_pem = rsa_key_2_pem
+        Doorkeeper::OpenidConnect.configure do
+          signing_key -> { key_pem }
+        end
+
+        kid_2 = subject.signing_key.kid
+
+        expect(kid_1).not_to eq kid_2
+      end
+
+      it 'returns same kid for same key across multiple calls' do
+        kid_1 = subject.signing_key.kid
+        kid_2 = subject.signing_key.kid
+
+        expect(kid_1).to eq kid_2
+      end
+
+      it 'can be used for JWT signing' do
+        jwk = subject.signing_key
+        payload = { sub: '123', iat: Time.now.to_i }
+
+        token = JWT.encode(payload, jwk.keypair, 'RS256', kid: jwk.kid)
+
+        expect(token).not_to be_nil
+        expect(token).to be_a String
+      end
+    end
+
+    context 'when signing_key is callable with EC key' do
+      let(:ec_key) do
+        OpenSSL::PKey::EC.generate('prime256v1')
+      end
+      let(:ec_key_pem) { ec_key.to_pem }
+
+      before do
+        key_pem = ec_key_pem
+        Doorkeeper::OpenidConnect.configure do
+          signing_algorithm :ES256
+          signing_key -> { key_pem }
+        end
+      end
+
+      it 'returns a JWK instance' do
+        expect(subject.signing_key).to be_a ::JWT::JWK::KeyBase
+      end
+
+      it 'generates correct key type' do
+        expect(subject.signing_key_normalized[:kty]).to eq 'EC'
+      end
+
+      it 'generates valid kid' do
+        expect(subject.signing_key.kid).not_to be_nil
+        expect(subject.signing_key.kid).to be_a String
+      end
+    end
+
+    context 'when signing_key is callable with HMAC key' do
+      let(:hmac_secret) { 'dynamic_hmac_secret_key_for_testing' }
+
+      before do
+        secret = hmac_secret
+        Doorkeeper::OpenidConnect.configure do
+          signing_algorithm :HS256
+          signing_key -> { secret }
+        end
+      end
+
+      it 'returns a JWK instance' do
+        expect(subject.signing_key).to be_a ::JWT::JWK::KeyBase
+      end
+
+      it 'generates correct key type' do
+        expect(subject.signing_key_normalized[:kty]).to eq 'oct'
+      end
+
+      it 'generates valid kid' do
+        expect(subject.signing_key.kid).not_to be_nil
+        expect(subject.signing_key.kid).to be_a String
+      end
+    end
   end
 
   describe '.signing_key_normalized' do
@@ -48,7 +159,7 @@ describe Doorkeeper::OpenidConnect do
       it 'returns the HMAC public key parameters' do
         expect(subject.signing_key_normalized).to eq(
           :kty => 'oct',
-          :kid => 'lyAW7LdxryFWQtLdgxZpOrI87APHrzJKgWLT0BkWVog'
+          :kid => 'UGyfZX0uOWB46idsQ0QxdFISdaoGilib_t-ZUw8V0Qc'
         )
       end
     end
