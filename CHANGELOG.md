@@ -1,6 +1,6 @@
 ## Unreleased
 
-- [#PR ID] Add your changelog entry here.
+- [#229] Allow to application manage signing key and algorithm
 
 ## v1.8.11 (2025-02-10)
 
