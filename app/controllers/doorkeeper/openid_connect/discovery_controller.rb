@@ -4,6 +4,7 @@ module Doorkeeper
   module OpenidConnect
     class DiscoveryController < ::Doorkeeper::ApplicationMetalController
       include Doorkeeper::Helpers::Controller
+      include GrantTypesSupportedMixin
 
       WEBFINGER_RELATION = 'http://openid.net/specs/connect/1.0/issuer'
 
@@ -34,6 +35,7 @@ module Doorkeeper
           userinfo_endpoint: oauth_userinfo_url(userinfo_url_options),
           jwks_uri: oauth_discovery_keys_url(jwks_url_options),
           end_session_endpoint: instance_exec(&openid_connect.end_session_endpoint),
+          registration_endpoint: openid_connect.dynamic_client_registration ? oauth_dynamic_client_registration_url(dynamic_client_registration_url_options) : nil,
 
           scopes_supported: doorkeeper.scopes,
 
@@ -71,12 +73,6 @@ module Doorkeeper
 
           code_challenge_methods_supported: code_challenge_methods_supported(doorkeeper),
         }.compact
-      end
-
-      def grant_types_supported(doorkeeper)
-        grant_types_supported = doorkeeper.grant_flows.dup
-        grant_types_supported << 'refresh_token' if doorkeeper.refresh_token_enabled?
-        grant_types_supported
       end
 
       def response_modes_supported(doorkeeper)
@@ -136,7 +132,7 @@ module Doorkeeper
         end
       end
 
-      %i[authorization token revocation introspection userinfo jwks webfinger].each do |endpoint|
+      %i[authorization token revocation introspection userinfo jwks webfinger dynamic_client_registration].each do |endpoint|
         define_method :"#{endpoint}_url_options" do
           discovery_url_default_options.merge(discovery_url_options[endpoint.to_sym] || {})
         end

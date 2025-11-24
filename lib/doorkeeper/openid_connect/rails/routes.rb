@@ -26,9 +26,15 @@ module Doorkeeper
 
         def generate_routes!(options)
           @mapping = Mapper.new.map(&@block)
+          openid_connect = ::Doorkeeper::OpenidConnect.configuration
+
           routes.scope options[:scope] || 'oauth', as: 'oauth' do
             map_route(:userinfo, :userinfo_routes)
             map_route(:discovery, :discovery_routes)
+
+            if openid_connect.dynamic_client_registration
+              map_route(:dynamic_client_registration, :dynamic_client_registration_routes)
+            end
           end
 
           routes.scope as: 'oauth' do
@@ -65,6 +71,10 @@ module Doorkeeper
             routes.get :provider, path: 'oauth-authorization-server'
             routes.get :webfinger
           end
+        end
+
+        def dynamic_client_registration_routes
+          routes.post :register, path: 'registration', as: ''
         end
       end
     end

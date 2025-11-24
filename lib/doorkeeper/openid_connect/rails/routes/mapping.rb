@@ -10,12 +10,14 @@ module Doorkeeper
           def initialize
             @controllers = {
               userinfo: 'doorkeeper/openid_connect/userinfo',
-              discovery: 'doorkeeper/openid_connect/discovery'
+              discovery: 'doorkeeper/openid_connect/discovery',
+              dynamic_client_registration: 'doorkeeper/openid_connect/dynamic_client_registration'
             }
 
             @as = {
               userinfo: :userinfo,
-              discovery: :discovery
+              discovery: :discovery,
+              dynamic_client_registration: :dynamic_client_registration
             }
 
             @skips = []

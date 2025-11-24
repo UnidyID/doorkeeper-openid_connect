@@ -59,6 +59,9 @@ Doorkeeper::OpenidConnect.configure do
   # Expiration time on or after which the ID Token MUST NOT be accepted for processing. (default 120 seconds).
   # expiration 600
 
+  # Enable dynamic client registration (default false)
+  # dynamic_client_registration true
+
   # Example claims:
   # claims do
   #   normal_claim :_foo_ do |resource_owner|

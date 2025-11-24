@@ -59,6 +59,61 @@ describe Doorkeeper::OpenidConnect::DiscoveryController, type: :controller do
       }.sort)
     end
 
+    it 'returns the provider configuration with client registration url' do
+      Doorkeeper::OpenidConnect.configure do
+        issuer "dummy"
+        dynamic_client_registration true
+      end
+
+      Rails.application.reload_routes!
+
+      get :provider
+      data = JSON.parse(response.body)
+
+      expect(data.sort).to match({
+        'issuer' => 'dummy',
+        'authorization_endpoint' => 'http://test.host/oauth/authorize',
+        'token_endpoint' => 'http://test.host/oauth/token',
+        'revocation_endpoint' => 'http://test.host/oauth/revoke',
+        'introspection_endpoint' => 'http://test.host/oauth/introspect',
+        'userinfo_endpoint' => 'http://test.host/oauth/userinfo',
+        'jwks_uri' => 'http://test.host/oauth/discovery/keys',
+        'registration_endpoint' => 'http://test.host/oauth/registration',
+
+        'scopes_supported' => ['openid'],
+        'response_types_supported' => ['code', 'token', 'id_token', 'id_token token'],
+        'response_modes_supported' => %w[query fragment form_post],
+        'grant_types_supported' => %w[authorization_code client_credentials implicit_oidc],
+
+        'token_endpoint_auth_methods_supported' => %w[client_secret_basic client_secret_post],
+
+        'subject_types_supported' => [
+          'public',
+        ],
+
+        'id_token_signing_alg_values_supported' => [
+          'RS256',
+        ],
+
+        'claim_types_supported' => [
+          'normal',
+        ],
+
+        'claims_supported' => %w[
+          iss
+          sub
+          aud
+          exp
+          iat
+        ],
+
+        'code_challenge_methods_supported' => %w[
+          plain
+          S256
+        ],
+      }.sort)
+    end
+
     context 'when refresh_token grant type is enabled' do
       before { Doorkeeper.configure { use_refresh_token } }
 
