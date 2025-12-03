@@ -1,6 +1,7 @@
 ## Unreleased
 
 - [#229] Allow to application manage signing key and algorithm
+- [#230] Add dynamic client registration
 
 ## v1.8.11 (2025-02-10)
 

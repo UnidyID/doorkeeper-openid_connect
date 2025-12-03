@@ -41,4 +41,25 @@ describe Doorkeeper::OpenidConnect::Rails::Routes, type: :routing do
       )
     end
   end
+
+  describe 'dynamic_client_registration' do
+    it 'doesn\'t map by default' do
+      Rails.application.reload_routes!
+
+      expect(post: 'oauth/registration').not_to be_routable
+    end
+
+    it 'maps POST #register' do
+      Doorkeeper::OpenidConnect.configure do
+        dynamic_client_registration true
+      end
+
+      Rails.application.reload_routes!
+
+      expect(post: 'oauth/registration').to route_to(
+        controller: 'doorkeeper/openid_connect/dynamic_client_registration',
+        action: 'register'
+      )
+    end
+  end
 end

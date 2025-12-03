@@ -79,6 +79,8 @@ module Doorkeeper
       option :discovery_url_options, default: lambda { |*_|
         {}
       }
+
+      option :dynamic_client_registration, default: false
     end
   end
 end
