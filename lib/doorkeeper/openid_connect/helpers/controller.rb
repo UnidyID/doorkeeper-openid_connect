@@ -122,8 +122,6 @@ module Doorkeeper
         end
 
         def clear_oidc_response
-          return unless response_body
-
           self.response_body = nil
           @_response_body = nil
         end
